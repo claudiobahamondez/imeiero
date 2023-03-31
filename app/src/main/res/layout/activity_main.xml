@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="15dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/buttonBack1"
+            android:layout_width="wrap_content"
+            android:layout_height="33dp"
+            android:text="Atras"
+            android:textSize="10sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="25dp" />
+
+
+        <TextView
+            android:id="@+id/labelSKU"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SKU" />
+
+        <TextView
+            android:id="@+id/textSKU"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+
+        <TextView
+            android:id="@+id/labelIMEI"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IMEI" />
+
+        <TextView
+            android:id="@+id/textIMEI"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <TextView
+            android:id="@+id/labelIMEITWO"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IMEI 2" />
+
+
+        <TextView
+            android:id="@+id/textIMEITWO"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="13dp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <TextView
+            android:id="@+id/textRESULT"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="seth">
+        <item>Selecciona un Set</item>
+        <item>Set Adulto</item>
+        <item>Set Artes</item>
+        <item>Set Media</item>
+        <item>Set Parvularia</item>
+        <item>Set Primer Ciclo Básico</item>
+        <item>Set Segundo Ciclo Básico A</item>
+        <item>Set Segundo Ciclo Básico B</item>
+    </string-array>
+    
+    
+</resources>

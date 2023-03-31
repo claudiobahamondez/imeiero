@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteX="128dp"
+        tools:layout_editor_absoluteY="128dp">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="198dp" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Elige una opción para continuar" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="20dp" />
+
+        <Button
+            android:id="@+id/buttonINV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="INVENTARIO IMEI" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/buttonEMP"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="EMPAQUE IMEI" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
