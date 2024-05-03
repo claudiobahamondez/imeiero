@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +14,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
@@ -39,8 +42,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-public class MainActivity2 extends Activity implements EMDKListener, StatusListener, DataListener{
+public class ActivityEmpaque extends Activity implements EMDKListener, StatusListener, DataListener{
 
     AlertDialog alerta;
     private BarcodeManager barcodeManager = null;
@@ -48,11 +53,11 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
     private EMDKManager emdkManager = null;
     public TextView statusTextView = null;
     Bundle losExtras;
-    String usuario, mensaje;
+    String usuario,bodega;
+    // String        token_id;
     TextView lblIMEI, lblIMEITWO, txtIMEI, txtIMEITWO, txtSKU, txtRESULT, txtOLPN, lblOLPN;
     ProgressBar pb_loading;
     Button botonParaAtras;
-    Conexion c;
     int currentQty;
 
 
@@ -60,6 +65,15 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maintwo);
+
+        losExtras = getIntent().getExtras();
+        try {
+            usuario = losExtras.getString("loggedUser");
+        //    token_id = losExtras.getString("tokenId");
+        }catch (Exception ex){
+            abrirActivityLog();
+        }
+
         pb_loading = (ProgressBar) findViewById(R.id.progress22);
         txtIMEI = (TextView) findViewById(R.id.textIMEI22);
         txtIMEITWO = (TextView) findViewById(R.id.textIMEITWO22);
@@ -70,14 +84,8 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         txtOLPN = (TextView) findViewById(R.id.textOLPN);
         lblOLPN = (TextView) findViewById(R.id.labelOLPN);
         botonParaAtras = (Button) findViewById(R.id.buttonBack22);
-        c= new Conexion();
+        bodega = "100";
         currentQty=0;
-        losExtras =getIntent().getExtras();
-        try {
-            usuario = losExtras.getString("loggedUser");
-        }catch (NullPointerException ex){
-            usuario = " ";
-        }
 
         botonParaAtras.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,15 +94,11 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
             }
         });
 
-
-
-        EMDKResults results = EMDKManager.getEMDKManager(
-                getApplicationContext(), this);
+        EMDKResults results = EMDKManager.getEMDKManager(getApplicationContext(), this);
 
         if (results.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
             statusTextView.setText("Falló el EMDKManager. Asi es la vida");
         }
-
         procesandoTarea(false);
         txtIMEI.setVisibility(View.INVISIBLE);
         lblIMEI.setVisibility(View.INVISIBLE);
@@ -102,30 +106,19 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         lblIMEITWO.setVisibility(View.INVISIBLE);
     }
 
-    //some lines of code omitted for clarity
-
     @Override
     public void onOpened(EMDKManager emdkManager) {
-        System.out.println("XQXQ onOpened");
-
         this.emdkManager = emdkManager;
-
         try {
-            // Call this method to enable Scanner and its listeners
             initializeScanner();
         } catch (ScannerException e) {
             e.printStackTrace();
         }
-
-// Toast to indicate that the user can now start scanning
-        Toast.makeText(MainActivity2.this,
-                mensaje,
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(ActivityEmpaque.this, "Escanear dato solicitado", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onClosed() {
-        System.out.println("XQXQ onClosed");
         if (this.emdkManager != null) {
             this.emdkManager.release();
             this.emdkManager = null;
@@ -134,13 +127,11 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
 
     @Override
     public void onData(ScanDataCollection scanDataCollection) {
-        System.out.println("XQXQ onData");
         new AsyncDataUpdate().execute(scanDataCollection);
     }
 
     @Override
     public void onStatus(StatusData statusData) {
-        System.out.println("XQXQ onStatus");
         try {
             scanner.read();
         } catch (ScannerException e) {
@@ -151,10 +142,8 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
 
     @Override
     protected void onDestroy() {
-        System.out.println("XQXQ onDestroy");
         super.onDestroy();
         if (emdkManager != null) {
-// Clean up the objects created by EMDK manager
             emdkManager.release();
             emdkManager = null;
         }
@@ -162,13 +151,9 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
 
     @Override
     protected void onStop() {
-        System.out.println("XQXQ onStop");
         super.onStop();
         try {
             if (scanner != null) {
-                // releases the scanner hardware resources for other application
-                // to use. You must call this as soon as you're done with the
-                // scanning.
                 scanner.removeDataListener(this);
                 scanner.removeStatusListener(this);
                 scanner.disable();
@@ -182,50 +167,28 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
     @Override
     protected void onRestart() {
         super.onRestart();
-        System.out.println("XQXQ onRestart");
         try {
-            // Call this method to enable Scanner and its listeners
             initializeScanner();
         } catch (ScannerException e) {
             e.printStackTrace();
         }
 
-// Toast to indicate that the user can now start scanning
-        Toast.makeText(MainActivity2.this,
-                "Aprieta el gatillo de la PDT para escanear",
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(ActivityEmpaque.this, "Escanear dato solicitado", Toast.LENGTH_SHORT).show();
     }
 
     private void initializeScanner() throws ScannerException {
-        System.out.println("XQXQ initializeScanner");
         if (scanner == null) {
             // Get the Barcode Manager object
-            barcodeManager = (BarcodeManager) this.emdkManager
-                    .getInstance(EMDKManager.FEATURE_TYPE.BARCODE);
-            // Get default scanner defined on the device
+            barcodeManager = (BarcodeManager) this.emdkManager.getInstance(EMDKManager.FEATURE_TYPE.BARCODE);
             scanner = barcodeManager.getDevice(BarcodeManager.DeviceIdentifier.DEFAULT);
-            // Add data and status listeners
             scanner.addDataListener(this);
             scanner.addStatusListener(this);
-            // Hard trigger. When this mode is set, the user has to manually
-            // press the trigger on the device after issuing the read call.
             scanner.triggerType = Scanner.TriggerType.HARD;
-            // Enable the scanner
             scanner.enable();
-            // Starts an asynchronous Scan. The method will not turn ON the
-            // scanner. It will, however, put the scanner in a state in which
-            // the scanner can be turned ON either by pressing a hardware
-            // trigger or can be turned ON automatically.
             scanner.read();
         }
     }
 
-
-    // Update the scan data on UI
-
-    // AsyncTask that configures the scanned data on background
-// thread and updated the result on UI thread with scanned data and type of
-// label
     public class AsyncDataUpdate extends AsyncTask<ScanDataCollection,Void,String> {
         @Override
         protected String doInBackground(ScanDataCollection... params) {
@@ -234,7 +197,6 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
 
             if ((scanDataCollection != null) && (scanDataCollection.getResult() == ScannerResults.SUCCESS)) {
                 ArrayList<ScanDataCollection.ScanData> scanData = scanDataCollection.getScanData();
-                //     for(ScanDataCollection.ScanData data : scanData) {         statusStr = data.getData();  }
                 statusStr = scanData.get(0).getData();
 
             }
@@ -251,7 +213,6 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
                     }catch(NullPointerException ex){
                         System.out.println(ex.toString());
                     }
-
                     String item = txtSKU.getText().toString().trim();
                     if(item.length()==0){
                         currentQty=0;
@@ -259,9 +220,8 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
                     }else{
                         String carton = txtOLPN.getText().toString().trim();
                         if(carton.length()==0) {
-
                             try{
-                                long veamos = Long.parseLong(result);
+                                long interLong = Long.parseLong(result);
                             }catch(NumberFormatException ex){
                                 if(result.length()==11){
                                     txtOLPN.setText(result);
@@ -331,8 +291,6 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         @Override
         protected void onProgressUpdate(Void... values) {
         }
-
-
     }
 
     public void detenerScanner(){
@@ -354,13 +312,13 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
 
     public void trabajoConUnSoloImei(String imei){
         try{
-            long interLonga = Long.parseLong(imei);
+            Long.parseLong(imei);
             if(imei.length()==15){
                 String olpn = txtOLPN.getText().toString().trim().toUpperCase();
                 String item = txtSKU.getText().toString().trim();
                 txtIMEI.setText(imei);
                 procesandoTarea(true);
-                new MainActivity2.UploadInformation().execute(imei, item, usuario,olpn);
+                updateConUnImei(imei, item, bodega, usuario,olpn);
             }else{
                 alertaDeError("Pinchar IMEI válido");
             }
@@ -382,7 +340,7 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
                     String olpn = txtOLPN.getText().toString().trim().toUpperCase();
                     txtIMEITWO.setText(imei);
                     procesandoTarea(true);
-                    new MainActivity2.UploadInformationFORTWO().execute(imei1, imei2, item, usuario, olpn);
+                    updateConDosImei(imei1, imei2, item, bodega, usuario, olpn);
                 }
             }else{
                 alertaDeError("Pinchar IMEI válido");
@@ -392,158 +350,20 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         }
     }
 
-
     public void hacerTodoLoQueEsteRelacionadoConPincharElSKU(String item){
             try{
                 long zku = Long.parseLong(item);
                 if(item.length()==13||item.length()==12||item.length()==9){
                     String url = "http://10.107.226.241/verificar_imeis_x_sku?sku=" + item;
-                    validarSKU(url, item);
+                    validarSKU(item, usuario);
                 }else{
                     alertaDeError("Eso no es un SKU");
-                    System.out.println("Error no tiene largo 13");
                 }
             }catch (NumberFormatException ex){
                 System.out.println(ex.toString());
                 alertaDeError("Eso no es un SKU");
             }
     }
-
-
-    class UploadInformation extends AsyncTask<String, Void, String> {
-        String records ="";
-        String the_imei = ""; String the_sku =""; String the_name="";String the_olpn="";
-        @Override
-        protected String doInBackground(String... strings) {
-            the_imei = strings[0];
-            the_sku = strings[1];
-            the_name = strings[2];
-            the_olpn = strings[3];
-            try{
-                Class.forName("net.sourceforge.jtds.jdbc.Driver");
-                Connection connection = DriverManager.getConnection(c.url,c.master,c.masterkey);
-                PreparedStatement statement2 = connection.prepareStatement("INSERT INTO IMEI_STOCK (IMEI, SKU, " +
-                        "USUARIO, BODEGA, OLPN) VALUES ('"+the_imei+"','"+the_sku+"','"+the_name+"','"+c.bodega+"','"+the_olpn+"') ");
-                statement2.executeUpdate();
-
-
-                PreparedStatement statement3 = connection.prepareStatement("UPDATE IMEI_STOCK SET " +
-                        "FECHA_EMPAQUE=FECHA_MOD WHERE IMEI='"+the_imei+"' AND OLPN='"+the_olpn+"' AND FECHA_INVENTARIO IS NULL AND FECHA_EMPAQUE IS NULL");
-                statement3.executeUpdate();
-
-                records ="OK";
-
-
-            } catch (Exception e) {
-                records= "PROB";
-                System.out.println("ERRORR2 "+e);
-            }
-
-            return null;
-        }
-        @Override
-        protected void onPostExecute(String aVoid) {
-            System.out.println(records);
-            procesandoTarea(false);
-            if(records.equals("OK")){
-                exito(the_imei, "", the_sku, the_olpn);
-            }
-            if(records.equals("PROB")){
-                alertaDeError("Problemas de conexion");
-                procesandoTarea(false);
-            }
-            super.onPostExecute(aVoid);
-        }
-    }
-
-    class UploadInformationFORTWO extends AsyncTask<String, Void, String> {
-        String records ="";
-        String the_imei = ""; String the_imei2 = "";String the_sku =""; String the_name=""; String the_olpn="";
-        @Override
-        protected String doInBackground(String... strings) {
-            the_imei = strings[0];
-            the_imei2 = strings[1];
-            the_sku = strings[2];
-            the_name = strings[3];
-            the_olpn = strings[4];
-
-            try{
-                Class.forName("net.sourceforge.jtds.jdbc.Driver");
-                Connection connection = DriverManager.getConnection(c.url,c.master,c.masterkey);
-                PreparedStatement statement2 = connection.prepareStatement("INSERT INTO IMEI_STOCK (IMEI, IMEI2, SKU, " +
-                        "USUARIO, BODEGA, OLPN) VALUES ('"+the_imei+"','"+the_imei2+"','"+the_sku+"','"+the_name+"','"+c.bodega+"','"+the_olpn+"') ");
-                statement2.executeUpdate();
-
-
-                PreparedStatement statement3 = connection.prepareStatement("UPDATE IMEI_STOCK SET " +
-                        "FECHA_EMPAQUE=FECHA_MOD WHERE IMEI='"+the_imei+"' AND IMEI2='"+the_imei2+"' AND OLPN='"+the_olpn+"' AND FECHA_INVENTARIO IS NULL AND FECHA_EMPAQUE IS NULL");
-                statement3.executeUpdate();
-
-                records ="OK";
-
-
-            } catch (Exception e) {
-                records= "PROB";
-                System.out.println("ERRORR2 "+e);
-            }
-
-            return null;
-        }
-        @Override
-        protected void onPostExecute(String aVoid) {
-            System.out.println(records);
-            procesandoTarea(false);
-            if(records.equals("OK")){
-                exito(the_imei, the_imei2, the_sku, the_olpn);
-            }
-            if(records.equals("PROB")){
-                alertaDeError("Problemas de conexion");
-                procesandoTarea(false);
-            }
-            super.onPostExecute(aVoid);
-        }
-    }
-
-
-    class UpdateImeiQuantity extends AsyncTask<String, Void, String> {
-        String records ="";
-        String the_sku = ""; String the_qty =""; String the_name="";
-        @Override
-        protected String doInBackground(String... strings) {
-            the_sku = strings[0];
-            the_qty = strings[1];
-            the_name = strings[2];
-
-            try{
-                Class.forName("net.sourceforge.jtds.jdbc.Driver");
-                Connection connection = DriverManager.getConnection(c.url,c.master,c.masterkey);
-                PreparedStatement statement2 = connection.prepareStatement("INSERT INTO IMEIS_X_SKU" +
-                        "(SKU, IMEIS, USUARIO) VALUES ('"+the_sku+"',"+the_qty+",'"+the_name+"') ");
-                statement2.executeUpdate();
-
-                records ="OK";
-            } catch (Exception e) {
-                records= "PROB";
-                System.out.println("ERRORR2 "+e);
-            }
-
-            return null;
-        }
-        @Override
-        protected void onPostExecute(String aVoid) {
-            System.out.println(records);
-            procesandoTarea(false);
-            if(records.equals("OK")){
-                hacerAlgoConElValor(Integer.parseInt(the_qty), the_sku);
-            }
-            if(records.equals("PROB")){
-                alertaDeError("Problemas de conexion");
-                procesandoTarea(false);
-            }
-            super.onPostExecute(aVoid);
-        }
-    }
-
 
     public void procesandoTarea(boolean status){
         if(status){
@@ -575,7 +395,7 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
     public void alertaDeError(String error){
         MediaPlayer mp = MediaPlayer.create(this,R.raw.error);
         mp.start();
-        Toast.makeText(MainActivity2.this, error, Toast.LENGTH_LONG).show();
+        Toast.makeText(ActivityEmpaque.this, error, Toast.LENGTH_LONG).show();
     }
 
     public void alertaDeExito(){
@@ -583,8 +403,16 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         mp.start();
     }
 
-    public void realizarProceso(String imei, String sku, String nombre){
-        new MainActivity2.UploadInformation().execute(imei,sku,nombre);
+    public void limpiaLaCosa(){
+        txtIMEI.setText("");
+        txtIMEITWO.setText("");
+        txtSKU.setText("");
+        txtOLPN.setText("");
+        txtOLPN.setVisibility(View.INVISIBLE);
+        txtIMEI.setVisibility(View.INVISIBLE);
+        lblIMEI.setVisibility(View.INVISIBLE);
+        txtIMEITWO.setVisibility(View.INVISIBLE);
+        lblIMEITWO.setVisibility(View.INVISIBLE);
     }
 
     public void exito(String imei, String imei2, String sku, String olpn){
@@ -598,7 +426,12 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         lblIMEI.setVisibility(View.INVISIBLE);
         txtIMEITWO.setVisibility(View.INVISIBLE);
         lblIMEITWO.setVisibility(View.INVISIBLE);
-        txtRESULT.setText("IMEI:"+imei+", IMEI 2:"+imei2+", SKU:"+sku+", OLPN:"+olpn);
+        String resultado = "IMEI: "+imei;
+        if(!(imei2.equals(""))){
+            resultado = resultado + "\nIMEI 2: "+imei2;
+        }
+        resultado = resultado + "\nSKU: "+sku+"\nOLPN: "+olpn;
+        txtRESULT.setText(resultado);
         procesandoTarea(false);
     }
 
@@ -610,55 +443,230 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         finish();
     }
 
-    public void validarSKU(String url, String item) {
-        StringRequest stringRequest = new StringRequest(url, new Response.Listener<String>() {
+    public void abrirActivityLog (){
+        detenerScanner();
+        Intent i = new Intent(this, Log.class);
+        startActivity(i);
+        finish();
+    }
+
+    private void validarSKU(String item, String usuario) {
+        String token = obtenerToken();
+        StringRequest sr = new StringRequest(Request.Method.POST, "http://10.107.226.241/apis/imm/verificar_imeis_x_sku", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                int valor = 0;
-                System.out.println("RESPUESTA :"+response);
-                try {
-                    JSONArray arregloJSON = new JSONArray(response);
-                    JSONObject objetoJSON = arregloJSON.getJSONObject(0);
-                    valor = objetoJSON.getInt("IMEIS");
-                    hacerAlgoConElValor(valor, item);
-                } catch (JSONException e) {
-                    Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
+                if (!response.isEmpty()) {
+                    procesandoTarea(false);
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        JSONObject jsonResponse = jsonArray.getJSONObject(0);
+                        String mensaje = jsonResponse.getString("mensaje");
+                        if (mensaje.equals("OK")) {
+                            int imeis = jsonResponse.getInt("imeis");
+                            hacerAlgoConElValor(imeis, item);
+                        } else {
+                            limpiaLaCosa();
+                            if(mensaje.contains("sesion")){
+                                alertaDeError("Error: " + mensaje);
+                                abrirActivityLog();
+                            }else{
+                                alertaDeError("Error: " + mensaje);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        alertaDeError("Error al interpretar los datos");
+                    }
+                } else {
+                    procesandoTarea(false);
+                    alertaDeError("Problemas de conexion");
                 }
             }
         }, new Response.ErrorListener() {
-            @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_LONG).show();
-                System.out.println(error);
+                procesandoTarea(false);
+                alertaDeError("Problemas de conexion (" + error.toString() + ")");
+                abrirActivityLog();
             }
-        });
-        stringRequest.setRetryPolicy(new RetryPolicy() {
+        }) {
             @Override
-            public int getCurrentTimeout() {
-                return 500000000;
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parametros = new HashMap<String, String>();
+                parametros.put("sku", item);
+                parametros.put("user", usuario);
+                parametros.put("token", token);
+                return parametros;
             }
+        };
+        RequestQueue rq = Volley.newRequestQueue(this);
+        rq.add(sr);
+    }
 
+    private void updateConUnImei(String imei, String item, String bodega, String usuario, String carton) {
+        String token = obtenerToken();
+        StringRequest sr = new StringRequest(Request.Method.POST, "http://10.107.226.241/apis/imm/emp_upd_one", new Response.Listener<String>() {
             @Override
-            public int getCurrentRetryCount() {
-                return 500000000;
+            public void onResponse(String response) {
+                if (!response.isEmpty()) {
+                    procesandoTarea(false);
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        JSONObject jsonResponse = jsonArray.getJSONObject(0);
+                        String mensaje = jsonResponse.getString("mensaje");
+                        if (mensaje.equals("OK")) {
+                            exito(imei, "", item, carton);
+                        } else {
+                            limpiaLaCosa();
+                            if(mensaje.contains("sesion")){
+                                alertaDeError("Error: " + mensaje);
+                                abrirActivityLog();
+                            }else{
+                                alertaDeError("Error: " + mensaje);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        alertaDeError("Error al interpretar los datos");
+                    }
+                } else {
+                    procesandoTarea(false);
+                    alertaDeError("Problemas de conexion");
+                }
             }
+        }, new Response.ErrorListener() {
+            public void onErrorResponse(VolleyError error) {
+                procesandoTarea(false);
+                alertaDeError("Problemas de conexion (" + error.toString() + ")");
+                abrirActivityLog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parametros = new HashMap<String, String>();
+                parametros.put("imei", imei);
+                parametros.put("sku", item);
+                parametros.put("user", usuario);
+                parametros.put("warehouse", bodega);
+                parametros.put("olpn", carton);
+                parametros.put("token", token);
+                return parametros;
+            }
+        };
+        RequestQueue rq = Volley.newRequestQueue(this);
+        rq.add(sr);
+    }
 
+    private void updateConDosImei(String imei, String imei2, String item, String bodega, String usuario, String carton) {
+        String token = obtenerToken();
+        StringRequest sr = new StringRequest(Request.Method.POST, "http://10.107.226.241/apis/imm/emp_upd_two", new Response.Listener<String>() {
             @Override
-            public void retry(VolleyError error) throws VolleyError {
-                Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_LONG).show();
-                System.out.println(error);
+            public void onResponse(String response) {
+                if (!response.isEmpty()) {
+                    procesandoTarea(false);
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        JSONObject jsonResponse = jsonArray.getJSONObject(0);
+                        String mensaje = jsonResponse.getString("mensaje");
+                        if (mensaje.equals("OK")) {
+                            exito(imei, imei2, item, carton);
+                        } else {
+                            limpiaLaCosa();
+                            if(mensaje.contains("sesion")){
+                                alertaDeError("Error: " + mensaje);
+                                abrirActivityLog();
+                            }else{
+                                alertaDeError("Error: " + mensaje);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        alertaDeError("Error al interpretar los datos");
+                    }
+                } else {
+                    procesandoTarea(false);
+                    alertaDeError("Problemas de conexion");
+                    abrirActivityLog();
+                }
             }
-        });
-        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-        requestQueue.add(stringRequest);
+        }, new Response.ErrorListener() {
+            public void onErrorResponse(VolleyError error) {
+                procesandoTarea(false);
+                alertaDeError("Problemas de conexion (" + error.toString() + ")");
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parametros = new HashMap<String, String>();
+                parametros.put("imei", imei);
+                parametros.put("imei2", imei2);
+                parametros.put("sku", item);
+                parametros.put("user", usuario);
+                parametros.put("olpn", carton);
+                parametros.put("warehouse", bodega);
+                parametros.put("token", token);
+                return parametros;
+            }
+        };
+        RequestQueue rq = Volley.newRequestQueue(this);
+        rq.add(sr);
+    }
+
+    private void updateImeiQty(String item, String cantidad, String usuario) {
+        String token = obtenerToken();
+        StringRequest sr = new StringRequest(Request.Method.POST, "http://10.107.226.241/apis/imm/update_imei_qty", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                System.out.println("RESPONSE "+response);
+                if (!response.isEmpty()) {
+                    procesandoTarea(false);
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        JSONObject jsonResponse = jsonArray.getJSONObject(0); // Obtener el primer objeto del arreglo
+                        String mensaje = jsonResponse.getString("mensaje");
+                        if (mensaje.equals("OK")) {
+                            hacerAlgoConElValor(Integer.parseInt(cantidad), item);
+                        } else {
+                            if(mensaje.contains("sesion")){
+                                alertaDeError("Error: " + mensaje);
+                                abrirActivityLog();
+                            }else{
+                                alertaDeError("Error: " + mensaje);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        alertaDeError("Error al interpretar los datos");
+                    }
+                } else {
+                    procesandoTarea(false);
+                    alertaDeError("Problemas de conexion");
+                }
+            }
+        }, new Response.ErrorListener() {
+            public void onErrorResponse(VolleyError error) {
+                procesandoTarea(false);
+                alertaDeError("Problemas de conexion (" + error.toString() + ")");
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parametros = new HashMap<String, String>();
+                parametros.put("sku", item);
+                parametros.put("user", usuario);
+                parametros.put("qty", cantidad);
+                parametros.put("token", token );
+                return parametros;
+            }
+        };
+        RequestQueue rq = Volley.newRequestQueue(this);
+        rq.add(sr);
     }
 
     public void hacerAlgoConElValor(int valor, String item){
         if(valor==0){
             preguntarCuantosImeiTieneElItem(item);
         }else if(valor==1){
-            Toast.makeText(getApplicationContext(), "1", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Escanear Carton e IMEI", Toast.LENGTH_LONG).show();
             currentQty=1;
             txtSKU.setText(item);
             txtIMEI.setVisibility(View.VISIBLE);
@@ -666,7 +674,7 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
             txtIMEITWO.setVisibility(View.INVISIBLE);
             lblIMEITWO.setVisibility(View.INVISIBLE);
         }else{
-            Toast.makeText(getApplicationContext(), "2", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Escanear Carton y los IMEI", Toast.LENGTH_LONG).show();
             currentQty=2;
             txtSKU.setText(item);
             txtIMEI.setVisibility(View.VISIBLE);
@@ -676,25 +684,29 @@ public class MainActivity2 extends Activity implements EMDKListener, StatusListe
         }
     }
 
-
     public void preguntarCuantosImeiTieneElItem(String item){
-        AlertDialog.Builder dialogo1 = new AlertDialog.Builder(MainActivity2.this);
+        AlertDialog.Builder dialogo1 = new AlertDialog.Builder(ActivityEmpaque.this);
         dialogo1.setTitle("Indicar información");
         dialogo1.setMessage("¿ Cuantos IMEI tiene el SKU "+item+" ?");
         dialogo1.setCancelable(false);
         dialogo1.setPositiveButton("1", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialogo1, int id) {
                 procesandoTarea(true);
-                new MainActivity2.UpdateImeiQuantity().execute(item,"1",usuario);
+                updateImeiQty(item,"1",usuario);
             }
         });
         dialogo1.setNegativeButton("2", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialogo1, int id) {
                 procesandoTarea(true);
-                new MainActivity2.UpdateImeiQuantity().execute(item,"2",usuario);
+                updateImeiQty(item,"2",usuario);
             }
         });
         dialogo1.show();
+    }
+
+    private String obtenerToken() {
+        SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        return sharedPreferences.getString("token", "");
     }
 
 }

@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".MyApp"
+        android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -21,9 +23,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.imeiero.Menu"/>
-        <activity android:name="com.example.imeiero.MainActivity" />
-        <activity android:name="com.example.imeiero.MainActivity2" />
+        <activity android:name="com.example.imeiero.Menu"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Accepts URIs that begin with "example://saml" -->
+                <data
+                    android:scheme="imeier"
+                    android:host="openmmn" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.example.imeiero.ActivityInventario" />
+        <activity android:name="com.example.imeiero.ActivityEmpaque" />
         <uses-library android:name="com.symbol.emdk" />
     </application>
     <uses-permission android:name="com.symbol.emdk.permission.EMDK" />

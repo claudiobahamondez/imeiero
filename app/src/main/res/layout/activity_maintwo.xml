@@ -21,74 +21,86 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="25dp" />
+            android:layout_height="15dp" />
 
 
         <TextView
             android:id="@+id/labelSKU22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SKU" />
+            android:gravity="center"
+            android:text="SKU"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textSKU22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:textSize="20sp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp" />
+            android:layout_height="10dp" />
 
         <TextView
             android:id="@+id/labelOLPN"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OLPN" />
+            android:gravity="center"
+            android:text="OLPN"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textOLPN"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:textSize="20sp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp" />
+            android:layout_height="10dp" />
 
         <TextView
             android:id="@+id/labelIMEI22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="IMEI" />
+            android:gravity="center"
+            android:text="IMEI"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textIMEI22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:textSize="20sp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp" />
+            android:layout_height="10dp" />
 
         <TextView
             android:id="@+id/labelIMEITWO22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="IMEI 2" />
+            android:gravity="center"
+            android:text="IMEI 2"
+            android:textStyle="bold" />
 
 
         <TextView
             android:id="@+id/textIMEITWO22"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:textSize="20sp" />
 
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp" />
+            android:layout_height="5dp" />
 
         <ProgressBar
             android:id="@+id/progress22"
@@ -98,7 +110,7 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp" />
+            android:layout_height="5dp" />
 
         <TextView
             android:id="@+id/textRESULT22"

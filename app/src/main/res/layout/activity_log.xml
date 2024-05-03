@@ -14,37 +14,91 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="198dp" />
+            android:layout_height="10dp" />
+
+        <ImageView
+            android:id="@+id/imageLogo"
+            android:layout_width="150dp"
+            android:layout_height="130dp"
+            android:layout_gravity="center"
+            android:src="@drawable/imeiero" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
 
         <TextView
             android:id="@+id/textView0"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Usuario" />
-
-        <EditText
-            android:id="@+id/txtUsuario0"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:gravity="center"
-            android:inputType="textPersonName" />
+            android:text="Usuario"
+            android:textSize="15sp" />
 
         <TextView
-            android:id="@+id/textViewStatus0"
-            android:layout_width="match_parent"
+            android:id="@+id/textUsuario"
+            android:layout_width="400dp"
             android:layout_height="wrap_content"
-            android:textSize="12sp" />
+            android:layout_gravity="center"
+            android:ems="10"
+            android:gravity="center"
+            android:inputType="textPersonName"
+            android:textSize="25sp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="33dp" />
+            android:layout_height="5dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Contraseña"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:inputType="textPassword"
+            android:textSize="25sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+
+        <Button
+            android:id="@+id/buttonLogin"
+            android:layout_width="205dp"
+            android:layout_height="54dp"
+            android:layout_gravity="center"
+            android:background="@drawable/button_background"
+            android:text="Iniciar sesión"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp" />
 
         <ProgressBar
             android:id="@+id/progressBar0"
             style="?android:attr/progressBarStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp" />
+
+        <TextView
+            android:id="@+id/textViewStatus0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="12sp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

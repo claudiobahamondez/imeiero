@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,6 +35,9 @@ import com.symbol.emdk.barcode.ScannerException;
 import com.symbol.emdk.barcode.ScannerResults;
 import com.symbol.emdk.barcode.StatusData;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,28 +47,47 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
     private BarcodeManager barcodeManager = null;
     private Scanner scanner = null;
     private EMDKManager emdkManager = null;
-    String usuario;
-    EditText txtUsuario;
+    TextView txtUsuario;
+    TextView tvPassword;
     AlertDialog alertaX;
     public TextView statusTextView2 = null;
     ProgressBar pb_loading;
+    private Button botonLoggear;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log);
-
-        txtUsuario = (EditText) findViewById(R.id.txtUsuario0);
+        tvPassword = findViewById(R.id.tvPassword);
+        tvPassword.setTransformationMethod(new PasswordTransformationMethod());
+        txtUsuario = (TextView) findViewById(R.id.textUsuario);
         statusTextView2 = findViewById(R.id.textViewStatus0);
         pb_loading = (ProgressBar) findViewById(R.id.progressBar0);
+        botonLoggear = (Button) findViewById(R.id.buttonLogin);
         EMDKResults results = EMDKManager.getEMDKManager(getApplicationContext(), this);
 
         if (results.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
             statusTextView2.setText("Falló el EMDKManager. Asi es la vida");
         }
+
+        txtUsuario.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                txtUsuario.setText("");
+                tvPassword.setText("");
+            }
+        });
+
+        botonLoggear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String usuario = txtUsuario.getText().toString();
+                String key = tvPassword.getText().toString();
+                procesandoTarea(true);
+                validarUsuario("http://10.107.226.241/apis/imm/log", usuario, key);
+            }
+        });
         procesandoTarea(false);
-
-
     }
 
     @Override
@@ -74,7 +99,7 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
             e.printStackTrace();
         }
         Toast.makeText(Log.this,
-                "Aprieta el gatillo de la PDT para escanear",
+                "Escanear usuario de Active para comenzar",
                 Toast.LENGTH_SHORT).show();
     }
 
@@ -175,9 +200,13 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
                     }catch(NullPointerException ex){
                         System.out.println(ex.toString());
                     }
-                    usuario=result;
-                    procesandoTarea(true);
-                    validarUsuario("http://10.107.226.241/ver_usuario_mht");
+                    if(txtUsuario.getText().toString().replace(" ","").trim().length()==0){
+                        String usuarioText = result;
+                        txtUsuario.setText(usuarioText);
+                    }else{
+                        String passText = result;
+                        tvPassword.setText(passText);
+                    }
                 }
             });
         }
@@ -248,10 +277,11 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
         }
     }
 
-    public void abrirActivityMain (String elUsuario){
+    public void abrirActivityMain (String elUsuario, String token_id){
         detenerScanner();
         Intent i = new Intent(this, Menu.class);
         i.putExtra("loggedUser", elUsuario);
+        i.putExtra("tokenId", token_id);
         startActivity(i);
         finish();
     }
@@ -278,18 +308,36 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
         mp.start();
     }
 
-    private void validarUsuario(String URL){
+    private void validarUsuario(String URL, String usuario, String clave){
         StringRequest sr = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>(){
             @Override
             public void onResponse(String response){
-                if(!response.isEmpty()){
-                    procesandoTarea(false);
-                    abrirActivityMain(usuario);
-                    System.out.println(response);
-                }else{
-                    procesandoTarea(false);
+                try {
+                    JSONObject jsonResponse = new JSONObject(response);
+                    String status = jsonResponse.getString("response");
+                    String mensaje = jsonResponse.getString("mensaje");
+                    if(status.equals("ok")){
+                        procesandoTarea(false);
+                        // Acciones a realizar si el inicio de sesión es exitoso
+                        String token_id = jsonResponse.getString("token");
+                        guardarToken(token_id);
+                        // Navegar a otra actividad o actualizar la UI
+                        System.out.println(token_id);
+                        abrirActivityMain(usuario,token_id);
+                        //Toast.makeText(getApplicationContext(), "Inicio de sesión exitoso", Toast.LENGTH_LONG).show();
+                        System.out.println(response);
+                    } else {
+                        // Acciones a realizar si hay un error
+                        procesandoTarea(false);
+                        alertaDeError();
+                        Toast.makeText(getApplicationContext(), mensaje, Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception e) {
                     alertaDeError();
-                    Toast.makeText(getApplicationContext(), "Usuario inexistente", Toast.LENGTH_LONG).show();
+                    procesandoTarea(false);
+                    e.printStackTrace();
+                    // Manejo de error en caso de que la respuesta JSON no sea válida
+                    Toast.makeText(getApplicationContext(), "Error en la respuesta del servidor", Toast.LENGTH_LONG).show();
                 }
             }
         }, new Response.ErrorListener(){
@@ -303,12 +351,22 @@ public class Log extends Activity implements EMDKListener, StatusListener, DataL
             protected Map<String,String> getParams() throws AuthFailureError {
                 Map<String,String> parametros = new HashMap<String,String>();
                 parametros.put("usuario", usuario);
+                parametros.put("clave", clave);
                 return parametros;
             }
         };
         RequestQueue rq = Volley.newRequestQueue(this);
         rq.add(sr);
     }
+
+
+    private void guardarToken(String token) {
+        SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("token", token);
+        editor.apply();
+    }
+
 
 }
 

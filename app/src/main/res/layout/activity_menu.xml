@@ -14,7 +14,7 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="198dp" />
+            android:layout_height="150dp" />
 
         <TextView
             android:id="@+id/textView6"
